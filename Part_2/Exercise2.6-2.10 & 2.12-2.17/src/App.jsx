@@ -1,6 +1,6 @@
-import React, { useEffect } from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import personService from "./services/persons";
+import "./App.css";
 
 // Filter Component
 const Filter = ({ searchTerm, handleSearchChange }) => {
@@ -10,7 +10,7 @@ const Filter = ({ searchTerm, handleSearchChange }) => {
       <input
         value={searchTerm}
         onChange={handleSearchChange}
-        placeholder="Search by name..."
+        placeholder="Search by name"
       />
     </div>
   );
@@ -57,13 +57,22 @@ const Persons = ({ persons, handleDelete }) => {
   );
 };
 
+// Notification Component
+const Notification = ({ message }) => {
+  if (message === "") {
+    return null;
+  }
+  return <div className="error">{message}</div>;
+};
+
 // Main App Component
 const App = (props) => {
   const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState("");
   const [newNumber, setNewNumber] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [error, setError] = useState(null);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState(""); 
 
   useEffect(() => {
     personService.getAll().then((initialPersons) => {
@@ -98,17 +107,22 @@ const App = (props) => {
         );
         setNewName("");
         setNewNumber("");
+        setMessage(`${existingPerson.name}'s number has been updated`); // Fixed here
+        setTimeout(() => {
+          setMessage("");
+        }, 5000);
       })
-      .catch((error) => {
+      .catch(() => {
         setError(
           `Information of ${existingPerson.name} has already been removed from server`
         );
         setTimeout(() => {
-          setError(null);
+          setError("");
         }, 5000);
         setPersons(persons.filter((person) => person.id !== existingPerson.id));
       });
   };
+
   // Add person function
   const addPerson = (event) => {
     event.preventDefault();
@@ -140,6 +154,10 @@ const App = (props) => {
       setPersons(persons.concat(returnedPerson));
       setNewName("");
       setNewNumber("");
+      setMessage(`${newName} has been added to phonebook`); // Added success message
+      setTimeout(() => {
+        setMessage("");
+      }, 5000);
     });
   };
 
@@ -150,9 +168,16 @@ const App = (props) => {
         .remove(id)
         .then(() => {
           setPersons(persons.filter((person) => person.id !== id));
+          setMessage(`${name} has been deleted from phonebook`); // Added delete message
+          setTimeout(() => {
+            setMessage("");
+          }, 5000);
         })
         .catch((error) => {
-          alert(`The person '${name}' was already deleted from the server`);
+          setError(`The person '${name}' was already deleted from the server`);
+          setTimeout(() => {
+            setError("");
+          }, 5000);
           setPersons(persons.filter((person) => person.id !== id));
         });
     }
@@ -165,6 +190,8 @@ const App = (props) => {
   return (
     <div>
       <h2>Search Your Contact</h2>
+      <Notification message={message} />
+      <Notification message={error} />
 
       <Filter searchTerm={searchTerm} handleSearchChange={handleSearchChange} />
 
